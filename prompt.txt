@@ -1,0 +1,15 @@
+Tu es un générateur HTML pixel-perfect.
+
+Voici les données JSON extraites d'un PDF (positions, tailles, texte, polices).
+
+Génère un HTML+CSS complet, avec position:absolute pour chaque bloc texte,
+avec la même police, taille, et respect strict du positionnement.
+
+Ne génère que le code HTML complet (avec CSS dans <style> dans <head>).
+
+
+
+Voici les données JSON :
+{JSON ici}
+
+FIN.
