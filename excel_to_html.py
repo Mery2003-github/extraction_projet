@@ -1,6 +1,6 @@
 import zipfile
-import base64
 import xml.etree.ElementTree as ET
+import base64
 from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
 from PIL import Image
@@ -16,7 +16,7 @@ QUALITY = 50
 PIXELS_PER_POINT = 1.33  
 DEFAULT_COL_WIDTH = 8.43  
 DEFAULT_ROW_HEIGHT = 15  
-EMU_PER_PIXEL = 9525      
+   
 def argb_to_hex(argb):
     if argb is None:
         return None
@@ -136,7 +136,7 @@ def get_cell_style(cell, styles, ws=None):
         'font': font.get('name', 'Calibri')
     })
 
-    # Si bg_color absent, chercher dans la colonne ou la ligne
+   
     if style['bg_color'] is None and ws is not None:
         col_letter = get_column_letter(cell.column)
         col_fill = ws.column_dimensions[col_letter].fill
@@ -181,7 +181,7 @@ def get_image_data(zipf, media_path):
         elif img.mode != "RGB":
             img = img.convert("RGB")
 
-        # Redimensionner si trop large
+      
         if img.width > MAX_IMAGE_WIDTH:
             ratio = MAX_IMAGE_WIDTH / img.width
             new_height = int(img.height * ratio)
@@ -199,7 +199,7 @@ def get_image_data(zipf, media_path):
             mime_fallback = "image/png" if ext == "png" else "image/jpeg"
             return f"data:{mime_fallback};base64," + base64.b64encode(data).decode()
         except:
-            return ""  # si tout échoue
+            return ""  
 
 def column_width_to_pixels(width):
     if width is None:
@@ -211,7 +211,7 @@ def column_width_to_pixels(width):
 def row_height_to_pixels(height):
     if height is None:
         height = DEFAULT_ROW_HEIGHT
-    return int(round(height * 96 / 89))  # points → pixels (96 DPI)
+    return int(round(height * 96 / 89))  
 
 
 def get_column_widths(wb, sheet_name=None):
@@ -237,11 +237,11 @@ def get_row_heights(wb, sheet_name=None):
 def calculate_position(start_idx, offset_emu, dimensions, is_column=True):
    
     if is_column:
-        # Pour les colonnes : somme des largeurs précédentes converties en pixels
+        
         total = sum(dimensions.get(i, DEFAULT_COL_WIDTH) * PIXELS_PER_POINT 
                    for i in range(1, start_idx))
     else:
-        # Pour les lignes : somme des hauteurs précédentes converties en pixels
+       
         total = sum(dimensions.get(i, DEFAULT_ROW_HEIGHT) * PIXELS_PER_POINT 
                    for i in range(1, start_idx))
     return total + (offset_emu / EMU_PER_PIXEL)
@@ -362,7 +362,7 @@ def get_sheet_zoom(zipf, sheet_path):
                     return zoom_scale
     except Exception as e:
         print(f"⚠ Erreur en lisant le zoom de la feuille: {e}")
-    return 100  # Zoom par défaut si absent ou erreur
+    return 100  
 
 def get_text_size(text, font_path, font_size, max_width=None):
     font = ImageFont.truetype(font_path, font_size)
@@ -456,7 +456,7 @@ def print_dimensions_before_after(col_widths, row_heights, target_width, toleran
         print("⚠ Le ratio d'aspect **n'est pas** respecté (avant et après extraction).")
     print("---------------------------------------------------")
 
-def generate_html(sheet_data, images, col_widths, row_heights, output_file, zoom_scale=100, target_width=450):
+def generate_html(sheet_data, images, col_widths, row_heights, output_file, zoom_scale=100, target_width=550):
     print_dimensions_before_after(col_widths, row_heights, target_width)
 
     original_width = sum(col_widths.values()) * PIXELS_PER_POINT
@@ -478,7 +478,7 @@ def generate_html(sheet_data, images, col_widths, row_heights, output_file, zoom
 <div style="position:relative;width:{new_width}px;height:{new_height}px;">
 """
 
-    # Génération du texte/cellules
+   
     for row in sheet_data:
         for cell in row:
             left = calculate_position(cell['col'], 0, col_widths, True) * scale_x
@@ -534,12 +534,12 @@ def generate_html(sheet_data, images, col_widths, row_heights, output_file, zoom
 </div>
 """
 
-    # Regrouper les images par cellule (row, col)
+
     images_by_cell = defaultdict(list)
     for img in images:
         images_by_cell[(img['row'], img['col'])].append(img)
 
-    # Afficher images groupées par cellule, centrées dans la cellule
+  
     for (row, col), cell_images in images_by_cell.items():
         cell_left = calculate_position(col, 0, col_widths, True) * scale_x
         cell_top = calculate_position(row, 0, row_heights, False) * scale_y
@@ -572,29 +572,27 @@ def generate_html(sheet_data, images, col_widths, row_heights, output_file, zoom
     print(f"✅ Fichier HTML généré avec échelle : {output_file}")
 
 def main():
-    input_file = r"xlsx\Etiquette CLEMENTINE (5).xlsx"
+    input_file = r"xlsx\Etiquette CLEMENTINE (10).xlsx"
     output_file = "fidele.html"
 
-    print("📂 Chargement du fichier Excel...")
+
     wb = load_workbook(input_file)
     sheet_name = wb.sheetnames[0]
 
     with zipfile.ZipFile(input_file) as zipf:
-        print("📝 Extraction du texte et styles...")
+      
         sheet_data = get_sheet_data(wb, zipf, sheet_name)
         col_widths = get_column_widths(wb, sheet_name)
         row_heights = get_row_heights(wb, sheet_name)
 
-        # Extraire le chemin du fichier sheet (ex: xl/worksheets/sheet1.xml)
-        sheet_path = f'xl/worksheets/{sheet_name}.xml'  # ATTENTION: adapter selon nom réel fichier
-        # Pour la plupart des fichiers sheet1.xml, sheet2.xml, etc., mieux récupérer dynamiquement :
-        # Exemple simple (prendre le premier sheet):
+       
+        sheet_path = f'xl/worksheets/{sheet_name}.xml'  
+        
+      
         sheet_path = [f for f in zipf.namelist() if f.startswith('xl/worksheets/sheet')][0]
 
         zoom_scale = get_sheet_zoom(zipf, sheet_path)
-        print(f"🔍 Zoom détecté : {zoom_scale}%")
-
-        print("🖼 Extraction des images...")
+      
         all_images = []
         drawings = [f for f in zipf.namelist() if f.startswith('xl/drawings/drawing')]
 
@@ -602,8 +600,7 @@ def main():
             images = parse_drawing(zipf, drawing_path, col_widths, row_heights)
             all_images.extend(images)
 
-    print(f"✅ {len(all_images)} images trouvées")
-    print("🧱 Génération du HTML fidèle...")
+  
     generate_html(sheet_data, all_images, col_widths, row_heights, output_file, zoom_scale)
 
 if __name__ == "__main__":
