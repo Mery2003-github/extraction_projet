@@ -456,7 +456,7 @@ def print_dimensions_before_after(col_widths, row_heights, target_width, toleran
         print("⚠ Le ratio d'aspect **n'est pas** respecté (avant et après extraction).")
     print("---------------------------------------------------")
 
-def generate_html(sheet_data, images, col_widths, row_heights, output_file, zoom_scale=100, target_width=550):
+def generate_html(sheet_data, images, col_widths, row_heights, output_file, zoom_scale=100, target_width=500):
     print_dimensions_before_after(col_widths, row_heights, target_width)
 
     original_width = sum(col_widths.values()) * PIXELS_PER_POINT
@@ -537,7 +537,19 @@ def generate_html(sheet_data, images, col_widths, row_heights, output_file, zoom
 
     images_by_cell = defaultdict(list)
     for img in images:
-        images_by_cell[(img['row'], img['col'])].append(img)
+       
+        img_left = img['left'] * scale_x
+        img_top = img['top'] * scale_y
+        img_width = img['width'] * scale_x
+        img_height = img['height'] * scale_y
+
+        html += f"""
+    <img src="{img['data_uri']}" alt="Image"
+         style="position:absolute; left:{img_left}px; top:{img_top}px;
+                width:{img_width}px; height:{img_height}px; object-fit:contain;">
+    """
+
+      
 
   
     for (row, col), cell_images in images_by_cell.items():
